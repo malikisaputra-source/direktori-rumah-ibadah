@@ -267,3 +267,17 @@ body.mode-situs .kredit-maliki { margin-bottom: 24px !important; }
 @media (prefers-reduced-motion: reduce) {
   .situs *, .situs *::before { animation: none !important; transition-duration: .01ms !important; }
 }
+
+/* Logo & foto unggahan pengurus (GAMBAR di profil.js) */
+.s-logo-foto { background: #fff; overflow: hidden; }
+.s-logo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.s-logo-ini { font-size: 14px; font-weight: 800; }
+.s-hero-foto { width: 100%; max-height: 380px; aspect-ratio: 4/3; object-fit: cover; border-radius: calc(var(--r) + 6px) calc(var(--r) + 6px) 0 0; display: block; animation: sNaik .7s var(--ease) both; }
+.s-gal img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .6s var(--ease); }
+.s-gal:hover img { transform: scale(1.04); }
+.s-gbr-label { display: block; font-weight: 600; font-size: 14px; margin-bottom: 6px; }
+.s-gbr-baris { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.s-gbr-prev { position: relative; width: 52px; height: 52px; border-radius: 10px; border: 1px dashed currentColor; opacity: .9; overflow: hidden; flex: none; }
+.s-gbr-prev img { width: 100%; height: 100%; object-fit: cover; }
+.s-gbr-prev small { position: absolute; right: 2px; bottom: 2px; background: rgb(0 0 0 / .7); color: #fff; font-size: 10px; padding: 0 4px; border-radius: 4px; }
+@media (prefers-reduced-motion: reduce) { .s-hero-foto, .s-gal img { animation: none; transition: none; } }

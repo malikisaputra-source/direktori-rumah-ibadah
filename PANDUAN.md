@@ -27,7 +27,7 @@ Panduan ini untuk kamu yang belum pernah ngoding. Cukup laptop, browser (Chrome/
    - Jadwal sholat: pilih zona (WIB/WITA/WIT). Kalau beda 1–2 menit dengan jadwal resmi Kemenag di daerahmu, isi koreksi menit (boleh minus).
 4. Simpan. Salin tautan website dengan tombol rantai di kanan atas.
 5. **QRIS asli**: simpan gambar QRIS resmi rekening masjid sebagai `qris.png` di folder paket, lalu minta Claude (lihat README "Ubah pakai Claude"): "pakai qris.png sebagai QRIS di website". Jangan sebar QRIS contoh — itu tidak bisa dipindai.
-6. **Foto asli di galeri**: minta Claude "ganti ilustrasi galeri dengan foto di folder foto/".
+6. **Logo & foto asli**: di **Edit profil › Logo & foto** unggah logo, foto utama, dan foto galeri (lihat "Ganti logo & foto" di bawah).
 7. Nama di header & warna: ubah `tema.js` (nama) dan `tema.css` (warna).
 
 ## 4. Penting: data tersimpan di browser
@@ -55,6 +55,63 @@ Isi website tersimpan di **localStorage browser perangkat yang dipakai mengedit*
 - Setiap bulan: **Data › Unduh JSON** sebagai cadangan.
 - Bandingkan jadwal sholat dengan jadwal resmi sekali sebulan; sesuaikan koreksi bila perlu.
 
+## Ganti logo & foto
+
+Semua aturan gambar ada di satu tempat: objek `GAMBAR` di awal bagian "Logo & foto profil" pada `profil.js` (`maks: 400` px, `mutu`, `galeriMaks: 6`). Gambar disimpan sebagai dataURL di data tempat (ikut ekspor/impor JSON), tanpa server.
+
+| Slot | Cara mengganti | Rasio | Bila kosong |
+|---|---|---|---|
+| Foto tiap tempat (kartu daftar & detail) | **Ajukan / Ubah data › Pilih foto** | 4:3 | ikon jenis rumah ibadah |
+| Logo di header website tempat | **Jadikan website › Edit profil › Logo & foto › Logo** | 1:1 | ikon jenis; gagal dimuat = inisial nama |
+| Foto hero website | **Edit profil › Foto utama / hero** | 4:3 | ilustrasi SVG bawaan |
+| Galeri (maks. 6) | **Edit profil › Foto galeri** (pilih beberapa sekaligus, urut sesuai judul galeri) | bebas, dipotong rapi | ilustrasi SVG bawaan |
+| Logo aplikasi & favicon | timpa `ikon.svg`; logo header ada di `index.html` (`svg.logo`) | 1:1 | – |
+
+Unggahan pengurus otomatis diperkecil ke 400 px. Tombol **Hapus** mengembalikan slot ke ilustrasi. Penyimpanan browser terbatas (±5 MB), jadi rutin **Data › Unduh JSON**.
+
 ---
 <!-- kredit-maliki -->
 Template oleh Maliki Saputra (@malikisaputra) — https://malikisaputra.biz.id. Kredit di footer wajib dipertahankan (lihat LICENSE).
+
+<!-- panduan-ai-maliki -->
+## Ubah sendiri sesuai kebutuhanmu pakai AI
+
+Kamu tidak perlu jago coding. Template ini sudah disiapkan supaya mudah diubah AI: ada **AGENTS.md** (aturan proyek untuk AI), **DESIGN.md** (gaya desain), dan skill Claude di folder `.claude/skills/`. Pilih salah satu cara di bawah.
+
+### Cara 1: ChatGPT, Claude, atau Gemini di browser (paling gampang, gratis)
+1. Unduh ZIP template ini, lalu ekstrak.
+2. Buka chatgpt.com, claude.ai, atau gemini.google.com.
+3. Unggah berkas yang mau diubah (biasanya `index.html`, `style.css`, `app.js`, atau berkas data). Unggah juga `AGENTS.md` dan `DESIGN.md` (kalau ada) biar AI paham aturannya. ChatGPT juga bisa menerima ZIP utuh.
+4. Tulis permintaanmu (contoh di bawah), lalu minta: "Kirim ulang berkas yang diubah secara utuh."
+5. Ganti berkas lama dengan hasil dari AI, lalu buka `index.html` di browser untuk cek.
+
+### Cara 2: Claude Code (paling rapi untuk perubahan besar)
+1. Pasang Claude Code (lihat claude.com/claude-code), atau pakai aplikasi Claude Desktop tab Code.
+2. Buka folder template ini, lalu jalankan `claude` di terminal folder itu.
+3. Tulis permintaanmu. Kalau ada folder `.claude/skills/ubah-…`, Claude Code otomatis memakainya, jadi hasilnya tetap mengikuti desain aslinya.
+
+### Cara 3: Codex (OpenAI)
+1. Pasang Codex CLI atau pakai Codex di aplikasi ChatGPT.
+2. Buka folder template, jalankan `codex`. Codex otomatis membaca `AGENTS.md`.
+3. Tulis permintaanmu, cek perubahannya, lalu setujui.
+
+### Cara 4: Google Antigravity atau Gemini CLI (gratis)
+1. Antigravity: buka aplikasinya, pilih **Open Folder** ke folder template ini, lalu tulis permintaan di panel agen.
+2. Gemini CLI: jalankan `gemini` di folder template.
+3. Di awal, tulis: "Baca AGENTS.md dan DESIGN.md dulu sebelum mengubah apa pun."
+
+### Contoh permintaan yang bisa langsung kamu pakai
+- "Ganti nama, logo teks, dan warna utama jadi hijau tua sesuai usahaku: [nama usaha]."
+- "Tambahkan kolom [nama kolom] di formulir dan tampilkan di daftar."
+- "Ubah semua data contoh jadi data usahaku: [tempel datanya]."
+- "Tambahkan halaman/menu baru untuk [kebutuhan], gaya desainnya sama dengan yang sudah ada."
+- "Jelaskan dulu cara kerja aplikasi ini dengan bahasa sederhana, baru ubah [bagian]."
+
+### Tips biar hasilnya bagus
+- Satu permintaan = satu perubahan. Cek dulu hasilnya, baru minta yang berikutnya.
+- Simpan salinan folder asli sebelum mengubah, jadi bisa balik kalau ada yang rusak.
+- Kalau ada error, salin pesan errornya (klik kanan > Inspect > Console) lalu tempel ke AI.
+- Data aplikasi tersimpan di browser (localStorage). Backup dulu sebelum ganti versi.
+- Jangan hapus kredit "Template oleh @malikisaputra", dan template ini **tidak boleh diperjualbelikan** tanpa izin. Mau menjual atau kerja sama? Diskusikan dulu dengan kreatornya (@malikisaputra).
+
+Masih bingung? Komen di TikTok/IG **@malikisaputra**, nanti aku bantu.

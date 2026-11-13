@@ -66,7 +66,8 @@
       tagline: masjid ? 'Rumah ibadah, rumah belajar, rumah bersama' : 'Terbuka untuk umat dan warga sekitar',
       sambutan: '', pengumuman: [], kegiatan: [], kas: { saldoAwal: 0, transaksi: [] },
       rekening: [], qris: true, galeri: ['Tampak depan', 'Ruang utama', 'Serambi', 'Halaman', 'Kegiatan umat', 'Senja di sini'],
-      koreksi: {}, zona: zonaDari(p.lng), email: '', diperbarui: Date.now()
+      koreksi: {}, zona: zonaDari(p.lng), email: '', diperbarui: Date.now(),
+      logo: '', fotoHero: '', fotoGaleri: [] // unggahan pengurus: dataURL ≤400px (lihat GAMBAR di bawah)
     };
   }
   function normalProfil(p) {
@@ -74,7 +75,7 @@
     if (!p.profil || typeof p.profil !== 'object') p.profil = k;
     Object.keys(k).forEach(function (x) { if (p.profil[x] === undefined) p.profil[x] = k[x]; });
     if (!p.profil.kas || !Array.isArray(p.profil.kas.transaksi)) p.profil.kas = k.kas;
-    ['pengumuman', 'kegiatan', 'rekening', 'galeri'].forEach(function (x) { if (!Array.isArray(p.profil[x])) p.profil[x] = k[x]; });
+    ['pengumuman', 'kegiatan', 'rekening', 'galeri', 'fotoGaleri'].forEach(function (x) { if (!Array.isArray(p.profil[x])) p.profil[x] = k[x]; });
     return p.profil;
   }
   /** Profil contoh Masjid Thoriqussalam (dipanggil dataContoh() di app.js). Semua nama, nomor & angka fiktif. */
@@ -166,6 +167,27 @@
 
   // ================= Render =================
   var aktifId = null, detikT = null, petaS = null, fokusSebelum = null;
+  // ================= Logo & foto profil =================
+  // SATU tempat pengaturan gambar website per tempat. Unggahan pengurus disimpan sebagai dataURL (localStorage),
+  // diperkecil ke sisi terpanjang GAMBAR.maks px. Slot kosong = ilustrasi SVG bawaan (heroSVG/galeriSVG).
+  var GAMBAR = { maks: 400, mutu: 0.75, galeriMaks: 6 };
+  function kecilkan(file, png, cb) {
+    var img = new Image(), url = URL.createObjectURL(file);
+    img.onload = function () {
+      var s = Math.min(1, GAMBAR.maks / Math.max(img.width, img.height)), c = document.createElement('canvas');
+      c.width = Math.round(img.width * s); c.height = Math.round(img.height * s); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url); cb(png ? c.toDataURL('image/png') : c.toDataURL('image/jpeg', GAMBAR.mutu));
+    };
+    img.onerror = function () { URL.revokeObjectURL(url); D().toast('Gambar tidak bisa dibaca'); };
+    img.src = url;
+  }
+  var inisial = function (s) { return String(s || '?').replace(/^(masjid|musala|gereja|pura|vihara|klenteng)\s+/i, '').split(/\s+/).map(function (w) { return w[0] || ''; }).join('').slice(0, 2).toUpperCase(); };
+  var amanGambar = function (s) { return /^data:image\/(png|jpe?g|webp|gif);base64,/.test(s || '') || /^(img\/|https?:\/\/)/.test(s || ''); };
+  window.addEventListener('error', function (e) { // gambar logo gagal dimuat → inisial
+    var t = e.target; if (t && t.tagName === 'IMG' && t.dataset.inisial) { var s = document.createElement('b'); s.className = 's-logo-ini'; s.textContent = t.dataset.inisial; t.replaceWith(s); }
+    else if (t && t.tagName === 'IMG' && t.dataset.cadangan === 'sembunyi') t.remove();
+  }, true);
+
   var D = function () { return window.DIR; };
   var tempat = function () { return D().cariTempat(aktifId); };
   var isMasjid = function (p) { return p.jenis === 'masjid' || p.jenis === 'musala'; };
@@ -207,7 +229,7 @@
     var html =
       '<header class="s-nav" data-bagian="nav"><div class="s-lebar s-nav-isi">' +
       '<button class="s-kembali" type="button" data-s="kembali" aria-label="Kembali ke direktori"><svg><use href="#i-kiri"/></svg><span>Direktori</span></button>' +
-      '<a class="s-merek" href="#sAtas"><span class="s-logo" aria-hidden="true"><svg><use href="#' + D().JENIS[j].ikon + '"/></svg></span><b>' + esc(p.nama) + '</b></a>' +
+      '<a class="s-merek" href="#sAtas"><span class="s-logo' + (amanGambar(pr.logo) ? ' s-logo-foto' : '') + '" aria-hidden="true">' + (amanGambar(pr.logo) ? '<img src="' + esc(pr.logo) + '" alt="" data-inisial="' + esc(inisial(p.nama)) + '">' : '<svg><use href="#' + D().JENIS[j].ikon + '"/></svg>') + '</span><b>' + esc(p.nama) + '</b></a>' +
       '<nav class="s-menu" aria-label="Bagian halaman">' + menu.map(function (x) { return '<a href="#' + x[0] + '">' + x[1] + '</a>'; }).join('') + '</nav>' +
       '<div class="s-aksi-nav">' + (adm ? '<button class="tbl tbl-emas kecil" type="button" data-s="edit"><svg><use href="#i-edit"/></svg><span>Edit profil</span></button>' : '') +
       '<button class="tbl s-ikon-tbl" type="button" data-s="bagikan" aria-label="Salin tautan website"><svg><use href="#i-bagikan"/></svg></button></div>' +
@@ -219,7 +241,7 @@
       '<h1 id="sNama" tabindex="-1" data-bagian="teks">' + esc(p.nama) + '</h1><p class="s-tagline">' + esc(pr.tagline) + '</p>' +
       '<div class="s-hero-tbl"><a class="tbl tbl-emas" href="#sJadwal"><svg><use href="#i-jam"/></svg>' + (m ? 'Lihat jadwal sholat' : 'Lihat jadwal ibadah') + '</a>' +
       '<a class="tbl s-tbl-kaca" href="#sInfak"><svg><use href="#i-hati"/></svg>' + (m ? 'Infak sekarang' : 'Dukung kami') + '</a></div></div>' +
-      '<div class="s-hero-gambar">' + heroSVG(j) + '</div></div>' +
+      '<div class="s-hero-gambar">' + (amanGambar(pr.fotoHero) ? '<img class="s-hero-foto" src="' + esc(pr.fotoHero) + '" alt="Foto ' + esc(p.nama) + '" data-cadangan="sembunyi">' : heroSVG(j)) + '</div></div>' +
       (m ? '<div class="s-lebar"><div class="s-hitung" id="sHitung" aria-live="off"></div></div>' : '') + '</section>' +
 
       // SAMBUTAN + PENGUMUMAN
@@ -250,8 +272,8 @@
       '<div class="s-infak">' + kasHTML(pr, adm) + donasiHTML(p, pr) + '</div></div></section>' +
 
       // GALERI
-      '<section class="s-blok s-lebar" id="sGaleri" aria-labelledby="sjGal"><div class="s-kepala"><h2 id="sjGal" class="s-judul">Galeri</h2><p class="s-redup">Ilustrasi contoh — ganti dengan foto asli tempatmu (lihat PANDUAN.md).</p></div>' +
-      '<ul class="s-galeri">' + pr.galeri.slice(0, 6).map(function (g, i) { return '<li class="s-gal" style="--i:' + i + '">' + galeriSVG(GAYA_GALERI[i % 6], j) + '<span>' + esc(g) + '</span></li>'; }).join('') + '</ul></section>' +
+      '<section class="s-blok s-lebar" id="sGaleri" aria-labelledby="sjGal"><div class="s-kepala"><h2 id="sjGal" class="s-judul">Galeri</h2><p class="s-redup">' + (pr.fotoGaleri.some(amanGambar) ? 'Dokumentasi ' + esc(p.nama) + '.' : 'Ilustrasi contoh — pengurus bisa mengunggah foto asli lewat Edit profil.') + '</p></div>' +
+      '<ul class="s-galeri">' + pr.galeri.slice(0, 6).map(function (g, i) { return '<li class="s-gal" style="--i:' + i + '">' + (amanGambar(pr.fotoGaleri[i]) ? '<img src="' + esc(pr.fotoGaleri[i]) + '" alt="' + esc(g) + '" loading="lazy" data-cadangan="sembunyi">' : galeriSVG(GAYA_GALERI[i % 6], j)) + '<span>' + esc(g) + '</span></li>'; }).join('') + '</ul></section>' +
 
       // KONTAK
       '<section class="s-blok s-lebar" id="sKontak" aria-labelledby="sjKontak"><div class="s-kepala"><h2 id="sjKontak" class="s-judul">Kontak & lokasi</h2></div>' +
@@ -412,6 +434,9 @@
       ruas('eKas', 'Transaksi kas <small>YYYY-MM-DD | keterangan | masuk | keluar</small>', '<textarea id="eKas" rows="5">' + isi(pr.kas.transaksi, function (x) { return [x.tgl, x.ket, x.masuk || 0, x.keluar || 0].join(' | '); }) + '</textarea>') +
       ruas('eRek', 'Rekening donasi <small>Bank | nomor | atas nama</small>', '<textarea id="eRek" rows="2">' + isi(pr.rekening, function (r) { return [r.bank, r.no, r.an].join(' | '); }) + '</textarea>') +
       '<label class="cek"><input type="checkbox" id="eQris"' + (pr.qris ? ' checked' : '') + '>Tampilkan kotak QRIS (placeholder)</label>' +
+      '<fieldset><legend>Logo &amp; foto</legend><p class="s-redup s-kecil">Diperkecil otomatis ke ' + GAMBAR.maks + ' px dan disimpan di browser ini. Kosong = ilustrasi bawaan.</p>' +
+        ruasGambar('eLogo', 'Logo (persegi 1:1)', pr.logo, false) + ruasGambar('eHero', 'Foto utama / hero (4:3)', pr.fotoHero, false) +
+        ruasGambar('eFGal', 'Foto galeri (maks. 6, urut sesuai judul)', pr.fotoGaleri.filter(Boolean)[0] || '', true) + '</fieldset>' +
       ruas('eGal', 'Judul galeri <small>maks. 6 baris</small>', '<textarea id="eGal" rows="3">' + esc(pr.galeri.join('\n')) + '</textarea>') +
       ruas('eKontak', 'Telepon / WhatsApp', '<input id="eKontak" inputmode="tel" maxlength="60" value="' + esc(p.kontak) + '">') +
       ruas('eEmail', 'Email', '<input id="eEmail" type="email" maxlength="80" value="' + esc(pr.email) + '">') +
@@ -420,10 +445,36 @@
         ['imsak', 'subuh', 'dzuhur', 'asar', 'maghrib', 'isya'].map(function (k) { return '<div class="ruas"><label for="k_' + k + '">' + NAMA_WAKTU[k] + '</label><input id="k_' + k + '" type="number" min="-30" max="30" step="1" value="' + (+pr.koreksi[k] || 0) + '"></div>'; }).join('') + '</div></fieldset>' : '') +
       '<small class="galat" id="eGalat" role="alert"></small></div>' +
       '<div class="s-editor-kaki aksi-form"><button class="tbl tbl-teks" type="button" data-e="tutup">Batal</button><button class="tbl tbl-utama" type="submit" data-bagian="utama"><svg><use href="#i-cek"/></svg>Simpan profil</button></div></form>';
+    ubahGambar = { logo: pr.logo, fotoHero: pr.fotoHero, fotoGaleri: pr.fotoGaleri.slice() };
     ed.hidden = false; $('#situsSelubung').hidden = false; ed.classList.add('tutup');
     requestAnimationFrame(function () { requestAnimationFrame(function () { ed.classList.remove('tutup'); }); });
     setTimeout(function () { $('#eTagline').focus(); }, 60);
   }
+  var ubahGambar = null;
+  function ruasGambar(id, label, src, banyak) {
+    return '<div class="ruas s-ruas-gambar"><span class="s-gbr-label">' + label + '</span><div class="s-gbr-baris"><span class="s-gbr-prev" id="' + id + 'Prev">' + (amanGambar(src) ? '<img src="' + esc(src) + '" alt="">' : '') + '</span>' +
+      '<label class="tbl tbl-garis kecil" for="' + id + '"><svg><use href="#i-unggah"/></svg>Pilih</label><input id="' + id + '" type="file" accept="image/*" class="sr"' + (banyak ? ' multiple' : '') + '>' +
+      '<button class="tbl tbl-teks kecil" type="button" data-hapus-gbr="' + id + '">Hapus</button></div></div>';
+  }
+  var KUNCI_GBR = { eLogo: 'logo', eHero: 'fotoHero', eFGal: 'fotoGaleri' };
+  function pratinjauGbr(id) {
+    var v = ubahGambar[KUNCI_GBR[id]], src = Array.isArray(v) ? v.filter(Boolean)[0] : v, el = $('#' + id + 'Prev');
+    if (el) el.innerHTML = src ? '<img src="' + esc(src) + '" alt="">' + (Array.isArray(v) && v.length > 1 ? '<small>+' + (v.length - 1) + '</small>' : '') : '';
+  }
+  document.addEventListener('change', function (e) {
+    var id = e.target && e.target.id; if (!ubahGambar || !KUNCI_GBR[id]) return;
+    var files = Array.prototype.slice.call(e.target.files || []).filter(function (f) { return /^image\//.test(f.type); });
+    if (!files.length) return;
+    if (id === 'eFGal') {
+      var hasil = [], sisa = Math.min(files.length, GAMBAR.galeriMaks);
+      files.slice(0, sisa).forEach(function (f, i) { kecilkan(f, false, function (d) { hasil[i] = d; if (!--sisa) { ubahGambar.fotoGaleri = hasil; pratinjauGbr(id); } }); });
+    } else kecilkan(files[0], id === 'eLogo', function (d) { ubahGambar[KUNCI_GBR[id]] = d; pratinjauGbr(id); });
+    e.target.value = '';
+  });
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('[data-hapus-gbr]'); if (!b || !ubahGambar) return;
+    var k = KUNCI_GBR[b.dataset.hapusGbr]; ubahGambar[k] = k === 'fotoGaleri' ? [] : ''; pratinjauGbr(b.dataset.hapusGbr);
+  });
   function ruas(id, label, kontrol) { return '<div class="ruas"><label for="' + id + '">' + label + '</label>' + kontrol + '</div>'; }
   function tutupEditor() {
     var ed = $('#situsEdit'); if (ed.hidden) return;
@@ -471,6 +522,7 @@
     pr.qris = $('#eQris').checked;
     var gal = baris($('#eGal').value).slice(0, 6); pr.galeri = gal.length ? gal : profilKosong(p).galeri;
     p.kontak = $('#eKontak').value.trim(); pr.email = email;
+    if (ubahGambar) { pr.logo = ubahGambar.logo || ''; pr.fotoHero = ubahGambar.fotoHero || ''; pr.fotoGaleri = (ubahGambar.fotoGaleri || []).slice(0, GAMBAR.galeriMaks); }
     if ($('#eZona')) {
       pr.zona = +$('#eZona').value;
       pr.koreksi = {}; ['imsak', 'subuh', 'dzuhur', 'asar', 'maghrib', 'isya'].forEach(function (k) { var v = parseInt($('#k_' + k).value, 10); if (v) pr.koreksi[k] = Math.max(-30, Math.min(30, v)); });
